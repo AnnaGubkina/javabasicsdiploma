@@ -16,7 +16,7 @@ public class GraphicsConverter implements TextGraphicsConverter {
 
 
     public GraphicsConverter() {
-
+        schema = new ColorSchema();
     }
 
     @Override
@@ -37,8 +37,29 @@ public class GraphicsConverter implements TextGraphicsConverter {
         //Выброс исключения
         if (ratio > maxRatio && maxRatio != 0) throw new BadImageSizeException(ratio, maxRatio);
 
+        //регулирование под максимальную высоту и ширину
+        if (img.getWidth() > width || img.getHeight() > height) {
+            //вычисляем коэффициенты сжатия картинки
+            if (width != 0) {
+                coeffWidth = img.getWidth() / width;
+            } else coeffWidth = 1;
+            if (height != 0) {
+                coeffHeidht = img.getHeight() / height;
+            } else coeffHeidht = 1;
 
+            if (coeffWidth > coeffHeidht) {
+                newWidth = (int) (img.getWidth() / coeffWidth);
+                newHeight = (int) (img.getHeight() / coeffWidth);
+            } else {
+                newWidth = (int) (img.getWidth() / coeffHeidht);
+                newHeight = (int) (img.getHeight() / coeffHeidht);
+            }
+        } else {
+            newWidth = img.getWidth();
+            newHeight = img.getHeight();
+        }
 
+        char [][] symbol = new char[newHeight][newWidth];
 
         Image scaledImage = img.getScaledInstance(newWidth, newHeight, BufferedImage.SCALE_SMOOTH);
 
@@ -50,32 +71,50 @@ public class GraphicsConverter implements TextGraphicsConverter {
 
         WritableRaster bwRaster = bwImg.getRaster();
 
+        for (int h = 0; h < newHeight; h++ ) {
+            for (int w = 0; w < newWidth; w++) {
+                int color = bwRaster.getPixel(w, h, new int[3])[0];
+                char c = schema.convert(color);
+            symbol[h][w] = c;
+            }
+        }
 
-     return null;
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < symbol.length; i++) {
+            for (int j = 0; j < symbol[i].length; j++) {
+                builder.append(symbol[i][j]);
+                builder.append(symbol[i][j]);
+            }
+            builder.append("\n");
+
+        }
+        String image = builder.toString();
+        return image;
     }
-
-
 
 
 
     @Override
     public void setMaxWidth(int width) {
+        this.width = width;
 
     }
 
     @Override
     public void setMaxHeight(int height) {
+        this.height = height;
 
     }
 
     @Override
     public void setMaxRatio(double maxRatio) {
+        this.maxRatio = maxRatio;
 
     }
 
     @Override
     public void setTextColorSchema(TextColorSchema schema) {
-
+        this.schema = schema;
     }
 
     public int getWidth() {
